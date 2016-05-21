@@ -71,6 +71,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets.vb" />
+    <Compile Include="Background.vb" />
+    <Compile Include="EnemyLaser.vb" />
     <Compile Include="EnemyShip.vb" />
     <Compile Include="EnemyShipBase.vb" />
     <Compile Include="EnemyWarship.vb" />

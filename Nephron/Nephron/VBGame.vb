@@ -247,8 +247,8 @@ Public Class VBGame
         Return Image.FromFile(path)
     End Function
 
-    Public Shared Function collideRect(rect1 As Rectangle, rect2 As Rectangle) As Boolean
-        Return rect1.IntersectsWith(rect2)
+    Public Shared Function collideRect(r1 As Rectangle, r2 As Rectangle) As Boolean
+        Return (r1.Left <= r2.Right AndAlso r2.Left <= r1.Right AndAlso r1.Top <= r2.Bottom AndAlso r2.Top <= r1.Bottom)
     End Function
 
     ''' <summary>
@@ -378,36 +378,36 @@ Public Class VBGame
 
     'Form event hooks.
 
-    Private Sub form_MouseWheel(ByVal sender As Object, ByVal e As MouseEventArgs) Handles Form.MouseWheel
+    Private Sub form_MouseWheel(ByVal sender As Object, ByVal e As MouseEventArgs) Handles form.MouseWheel
         mouseevents.Add(MouseEvent.InterpretFormEvent(e, CByte(MouseEvent.actions.scroll)))
         mouse = e
     End Sub
 
-    Private Sub form_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs) Handles Form.MouseMove
+    Private Sub form_MouseMove(ByVal sender As Object, ByVal e As MouseEventArgs) Handles form.MouseMove
         mouseevents.Add(MouseEvent.InterpretFormEvent(e, CByte(MouseEvent.actions.move)))
         mouse = e
     End Sub
 
-    Private Sub form_MouseDown(ByVal sender As Object, ByVal e As MouseEventArgs) Handles Form.MouseDown
+    Private Sub form_MouseDown(ByVal sender As Object, ByVal e As MouseEventArgs) Handles form.MouseDown
         mouseevents.Add(MouseEvent.InterpretFormEvent(e, CByte(MouseEvent.actions.down)))
         mouse = e
     End Sub
 
-    Private Sub form_MouseClick(ByVal sender As Object, ByVal e As MouseEventArgs) Handles Form.MouseClick
+    Private Sub form_MouseClick(ByVal sender As Object, ByVal e As MouseEventArgs) Handles form.MouseClick
         mouseevents.Add(MouseEvent.InterpretFormEvent(e, CByte(MouseEvent.actions.up)))
         mouse = e
     End Sub
 
-    Private Sub form_MouseDoubleClick(ByVal sender As Object, ByVal e As MouseEventArgs) Handles Form.MouseDoubleClick
+    Private Sub form_MouseDoubleClick(ByVal sender As Object, ByVal e As MouseEventArgs) Handles form.MouseDoubleClick
         mouseevents.Add(MouseEvent.InterpretFormEvent(e, CByte(MouseEvent.actions.up)))
         mouse = e
     End Sub
 
-    Private Sub form_KeyDown(ByVal sender As Object, ByVal e As KeyEventArgs) Handles Form.KeyDown
+    Private Sub form_KeyDown(ByVal sender As Object, ByVal e As KeyEventArgs) Handles form.KeyDown
         keydownevents.Add(e)
     End Sub
 
-    Private Sub form_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles Form.KeyUp
+    Private Sub form_KeyUp(ByVal sender As Object, ByVal e As KeyEventArgs) Handles form.KeyUp
         keyupevents.Add(e)
     End Sub
 
@@ -476,7 +476,7 @@ Public Class BitmapSurface
     Inherits DrawBase
 
     Private displaygraphics As Graphics
-    Private display As Bitmap
+    Public bitmap As Bitmap
 
     Public Sub New(size As Size, Optional format As Imaging.PixelFormat = Nothing)
 
@@ -487,8 +487,8 @@ Public Class BitmapSurface
         width = size.Width
         height = size.Height
 
-        display = New Bitmap(width, height, format)
-        displaygraphics = Graphics.FromImage(display)
+        bitmap = New Bitmap(width, height, format)
+        displaygraphics = Graphics.FromImage(bitmap)
 
         displaycontext = BufferedGraphicsManager.Current
         displaybuffer = displaycontext.Allocate(displaygraphics, getRect())
@@ -498,7 +498,7 @@ Public Class BitmapSurface
         If autoupdate Then
             update()
         End If
-        Return display
+        Return bitmap
     End Function
 
 End Class
@@ -512,6 +512,7 @@ Public Class Sound
 
     Public Sub New(filename As String)
         name = filename
+        load()
     End Sub
 
     ''' <summary>
@@ -546,10 +547,8 @@ Public Class Sound
     ''' <remarks></remarks>
     Sub play(Optional repeat As Boolean = False)
         If repeat Then
-            load()
             mciSendString("play " & name & " repeat", CStr(0), 0, 0)
         Else
-            load()
             mciSendString("play " & name, CStr(0), 0, 0)
         End If
     End Sub
@@ -793,76 +792,127 @@ Public Class Sprite
     Function keepInBounds(bounds As Rectangle, Optional trig As Boolean = False, Optional bounce As Boolean = False) As Boolean
         Dim move As PointF
         Dim wd As Boolean = False
-        If Not trig Then
-            move = calcMove()
-            If move.X + width > bounds.X + bounds.Width Then
-                wd = True
-                x = bounds.X + bounds.Width - width
-                pxc = 0
-                If bounce Then
-                    nxc = speed
-                End If
 
-            ElseIf move.X < bounds.X Then
-                wd = True
-                x = bounds.X
-                If bounce Then
-                    pxc = speed
-                End If
-                nxc = 0
+        move = calcMove(trig)
+        If move.X + width > bounds.X + bounds.Width Then
+            wd = True
+            x = bounds.X + bounds.Width - width
+            If bounce Then
+                bounceX(trig)
             End If
 
-            If move.Y + height > bounds.Y + bounds.Height Then
-                wd = True
-                y = bounds.Y + bounds.Height - height
-                pyc = 0
-                If bounce Then
-                    nyc = speed
-                End If
-
-            ElseIf move.Y < bounds.Y Then
-                wd = True
-                y = bounds.Y
-                If bounce Then
-                    pyc = speed
-                End If
-                nyc = 0
+        ElseIf move.X < bounds.X Then
+            wd = True
+            x = bounds.X
+            If bounce Then
+                bounceX(trig)
             End If
-
-        Else
-            move = calcMove(True)
-            If move.X + width > bounds.X + bounds.Width Then
-                wd = True
-                x = bounds.X + bounds.Width - width
-                If bounce Then
-                    angle = -angle + 180
-                End If
-
-            ElseIf move.X < bounds.X Then
-                wd = True
-                x = bounds.X
-                If bounce Then
-                    angle = -angle + 180
-                End If
-
-            End If
-            If move.Y + height > bounds.Y + bounds.Height Then
-                wd = True
-                y = bounds.Y + bounds.Height - height
-                If bounce Then
-                    angle = -angle
-                End If
-
-            ElseIf move.Y < bounds.Y Then
-                wd = True
-                y = bounds.Y
-                If bounce Then
-                    angle = -angle
-                End If
-            End If
-            normalizeAngle()
         End If
+
+        If move.Y + height > bounds.Y + bounds.Height Then
+            wd = True
+            y = bounds.Y + bounds.Height - height
+            If bounce Then
+                bounceY(trig)
+            End If
+
+        ElseIf move.Y < bounds.Y Then
+            wd = True
+            y = bounds.Y
+            If bounce Then
+                bounceY(trig)
+            End If
+        End If
+
         Return wd
+    End Function
+
+    Private Sub bounceY(trig As Boolean)
+        If trig Then
+            angle = -angle
+        Else
+            Dim tmp As Double
+            tmp = pyc
+            pyc = nyc
+            nyc = tmp
+        End If
+    End Sub
+
+    Private Sub bounceX(trig As Boolean)
+        If trig Then
+            angle = -angle + 180
+        Else
+            Dim tmp As Double
+            tmp = pxc
+            pxc = nxc
+            nxc = tmp
+        End If
+    End Sub
+
+    Private Function verticalCollisions(intersectRect As Rectangle, hitRect As Rectangle, trig As Boolean, bounce As Boolean) As Boolean
+
+        If intersectRect.Y = hitRect.Y Then
+            y = hitRect.Y - height
+            If bounce Then
+                bounceY(trig)
+            End If
+            Return True
+
+        ElseIf intersectRect.Y + intersectRect.Height = hitRect.Y + hitRect.Height Then
+            y = hitRect.Bottom
+            If bounce Then
+                bounceY(trig)
+            End If
+            Return True
+        End If
+
+        Return False
+    End Function
+
+    Private Function horizontalCollisions(intersectRect As Rectangle, hitRect As Rectangle, trig As Boolean, bounce As Boolean) As Boolean
+
+        If intersectRect.X = hitRect.X Then
+            x = hitRect.X - width
+            If bounce Then
+                bounceX(trig)
+            End If
+            Return True
+
+        ElseIf intersectRect.X + intersectRect.Width = hitRect.X + hitRect.Width Then
+            x = hitRect.Right
+            If bounce Then
+                bounceX(trig)
+            End If
+            Return True
+        End If
+
+        Return False
+    End Function
+
+    Public Function keepOutsideBounds(bounds As Rectangle, Optional trig As Boolean = False, Optional bounce As Boolean = False) As Boolean
+        If VBGame.collideRect(getRect(), bounds) Then
+            Dim intersectRect As Rectangle = getRect()
+
+            intersectRect.Intersect(bounds)
+
+            If intersectRect.Width > intersectRect.Height Then
+                If Not verticalCollisions(intersectRect, bounds, trig, bounce) Then
+                    Return horizontalCollisions(intersectRect, bounds, trig, bounce)
+                Else
+                    Return True
+                End If
+
+            Else
+                If Not horizontalCollisions(intersectRect, bounds, trig, bounce) Then
+                    Return verticalCollisions(intersectRect, bounds, trig, bounce)
+                Else
+                    Return True
+                End If
+            End If
+        Else
+            Return False
+        End If
+
     End Function
 
     Sub setRect(rect As Rectangle)

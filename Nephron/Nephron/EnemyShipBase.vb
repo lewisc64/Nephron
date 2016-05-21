@@ -15,23 +15,31 @@
     Public Sub reset(random As Random, display As VBGame)
         x = random.Next(0, display.width - width)
         y = -height
+        wait(random)
+    End Sub
+
+    Public Sub wait(random As Random)
+        waitFrames = random.Next(60, 600)
     End Sub
 
     Public Function handle(random As Random, display As VBGame) As Boolean
 
         If waitFrames = 0 Then
-            y += speed
+            move()
         Else
             waitFrames -= 1
         End If
 
         If y > display.height Then
             reset(random, display)
-            waitFrames = random.Next(60, 600)
             Return True
         End If
 
         Return False
+    End Function
+
+    Public Function collides(playerShip As PlayerShip) As Boolean
+        Return VBGame.collideRect(playerShip.getRect(), getRect())
     End Function
 
 End Class

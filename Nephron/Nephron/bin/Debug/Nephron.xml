@@ -6,7 +6,20 @@ Nephron
 </name>
 </assembly>
 <members>
-<member name="M:Nephron.DrawBase.update">
+<member name="P:Nephron.My.Resources.Resources.ResourceManager">
+	<summary>
+  Returns the cached ResourceManager instance used by this class.
+</summary>
+</member><member name="P:Nephron.My.Resources.Resources.Culture">
+	<summary>
+  Overrides the current thread's CurrentUICulture property for all
+  resource lookups using this strongly typed resource class.
+</summary>
+</member><member name="T:Nephron.My.Resources.Resources">
+	<summary>
+  A strongly-typed resource class, for looking up localized strings, etc.
+</summary>
+</member><member name="M:Nephron.DrawBase.update">
 	<summary>
  Renders the display buffer to the form.
  </summary>
@@ -172,19 +185,6 @@ Nephron
 	<param name="e">MouseEvent from loop.</param>
 	<returns></returns>
 	<remarks></remarks>
-</member><member name="P:Nephron.My.Resources.Resources.ResourceManager">
-	<summary>
-  Returns the cached ResourceManager instance used by this class.
-</summary>
-</member><member name="P:Nephron.My.Resources.Resources.Culture">
-	<summary>
-  Overrides the current thread's CurrentUICulture property for all
-  resource lookups using this strongly typed resource class.
-</summary>
-</member><member name="T:Nephron.My.Resources.Resources">
-	<summary>
-  A strongly-typed resource class, for looking up localized strings, etc.
-</summary>
 </member>
 </members>
 </doc>
